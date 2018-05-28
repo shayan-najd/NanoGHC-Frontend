@@ -6,45 +6,36 @@
 {-# LANGUAGE DeriveFoldable     #-}
 {-# LANGUAGE DeriveTraversable  #-}
 {-# LANGUAGE FlexibleInstances  #-}
-{-# OPTIONS_GHC -fno-omit-interface-pragmas #-}
+{-# OPTIONS_GHC -Wall -fno-omit-interface-pragmas #-}
    -- Workaround for Trac #5252 crashes the bootstrap compiler without -O
    -- When the earliest compiler we want to boostrap with is
    -- GHC 7.2, we can make RealSocLoc properly abstract
 
 -- | This module contains types that relate to the positions of things
 -- in source files, and allow tagging of those things with locations
-module U.SrcLoc ( SrcLoc(..)
-                                      , SrcSpan(..)
-                                      , Located
-                                      , GenLocated(..)
-                                      , RealLocated(..)
-                                      , RealSrcLoc(..)
-                                      , RealSrcSpan(..)
-                                      , noLoc
-                                      , combineLocs
-                                      , getLoc
-                                      , unLoc
-                                      , mkSrcSpan
-                                      , mkSrcLoc
-                                      , mkRealSrcSpan
-                                      , mkRealSrcLoc
-                                      , noSrcSpan
-                                      , srcSpanEnd
-                                      , isSubspanOf
-                                      , isPointRealSpan
-                                      , isOneLineRealSpan
-                                      , srcSpanStart
-                                      , advanceSrcLoc
-                                      , realSrcSpanStart
-                                      , srcSpanStartLine
-                                      , srcSpanEndLine
-                                      , srcLocCol
-                                      , srcSpanStartCol
-                                      , srcSpanEndCol
-                                      , combineSrcSpans
-                                      , addCLoc
-                                      , srcSpanFirstCharacter
-                                      , srcLocFile) where
+module U.SrcLoc
+  ( SrcLoc(..)
+  , SrcSpan(..)
+  , Located
+  , GenLocated(..)
+  , RealLocated
+  , RealSrcLoc(..)
+  , RealSrcSpan(..)
+  , noLoc
+  , combineLocs
+  , getLoc
+  , unLoc
+  , mkSrcSpan
+  , mkSrcLoc
+  , mkRealSrcSpan
+  , mkRealSrcLoc
+  , noSrcSpan
+  , srcSpanEnd
+  , isSubspanOf
+  , advanceSrcLoc
+  , realSrcSpanStart
+  , combineSrcSpans
+  , srcLocFile) where
 
 import U.FastString
 
@@ -226,13 +217,6 @@ combineRealSrcSpans span1 span2
                                   (srcSpanEndLine span2, srcSpanEndCol span2)
     file = srcSpanFile span1
 
--- | Convert a SrcSpan into one that represents only its first character
-srcSpanFirstCharacter :: SrcSpan -> SrcSpan
-srcSpanFirstCharacter l@(UnhelpfulSpan {}) = l
-srcSpanFirstCharacter (RealSrcSpan span) = RealSrcSpan $ mkRealSrcSpan loc1 loc2
-  where
-    loc1@(SrcLoc f l c) = realSrcSpanStart span
-    loc2 = SrcLoc f l (c+1)
 
 {-
 %************************************************************************
@@ -312,11 +296,11 @@ instance Show RealSrcLoc where
 
 -- Show is used by Lexer.x, because we derive Show for Token
 instance Show RealSrcSpan where
-  show span@(RealSrcSpan' file sl sc el ec)
-    | isPointRealSpan span
+  show sp@(RealSrcSpan' file sl sc el ec)
+    | isPointRealSpan sp
     = "SrcSpanPoint " ++ show file ++ " " ++ intercalate " " (map show [sl,sc])
 
-    | isOneLineRealSpan span
+    | isOneLineRealSpan sp
     = "SrcSpanOneLine " ++ show file ++ " "
                         ++ intercalate " " (map show [sl,sc,ec])
 
@@ -349,14 +333,6 @@ noLoc e = L noSrcSpan e
 
 combineLocs :: Located a -> Located b -> SrcSpan
 combineLocs a b = combineSrcSpans (getLoc a) (getLoc b)
-
--- | Combine locations from two 'Located' things and add them to a third thing
-addCLoc :: Located a -> Located b -> c -> Located c
-addCLoc a b c = L (combineSrcSpans (getLoc a) (getLoc b)) c
-
--- not clear whether to add a general Eq instance, but this is useful sometimes:
-
--- not clear whether to add a general Ord instance, but this is useful sometimes:
 
 {-
 ************************************************************************

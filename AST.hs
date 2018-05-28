@@ -9,6 +9,9 @@
 {-# LANGUAGE TypeFamilies                        #-}
 {-# LANGUAGE TypeOperators                       #-}
 {-# LANGUAGE ConstraintKinds                     #-}
+{-# LANGUAGE PatternSynonyms                     #-}
+{-# LANGUAGE ViewPatterns                        #-}
+
 module AST
   ( Spanned(..)
   , ExpPS
@@ -21,6 +24,7 @@ module AST
   , Pat(..)
   , Dec(..)
   , Nam(..)
+  , pattern L'
   ) where
 
 import U.SrcLoc
@@ -233,15 +237,15 @@ class Spanned a where
 -- ------------------------------------------------------------------------
 
 instance (ForallXExp Spanned x) => Spanned (Exp x) where
-  getSpan (Lit    ex _ _) = getSpan ex
-  getSpan (Var    ex _)   = getSpan ex
-  getSpan (Typ    ex _ _) = getSpan ex
-  getSpan (Abs    ex _ _) = getSpan ex
-  getSpan (App    ex _ _) = getSpan ex
-  getSpan (Tup    ex _ _) = getSpan ex
-  getSpan (Let    ex _ _) = getSpan ex
-  getSpan (Par    ex _)   = getSpan ex
-  getSpan (NewExp ex)     = getSpan ex
+  getSpan (Lit    ex _ _)    = getSpan ex
+  getSpan (Var    ex _)      = getSpan ex
+  getSpan (Typ    ex _ _)    = getSpan ex
+  getSpan (Abs    ex _ _)    = getSpan ex
+  getSpan (App    ex _ _)    = getSpan ex
+  getSpan (Tup    ex _ _)    = getSpan ex
+  getSpan (Let    ex _ _)    = getSpan ex
+  getSpan (Par    ex _)      = getSpan ex
+  getSpan (NewExp ex)        = getSpan ex
 
   setSpan (Lit    ex s i) sp = Lit    (setSpan ex sp) s i
   setSpan (Var    ex x)   sp = Var    (setSpan ex sp) x
@@ -254,11 +258,11 @@ instance (ForallXExp Spanned x) => Spanned (Exp x) where
   setSpan (NewExp ex)     sp = NewExp (setSpan ex sp)
 
 instance (ForallXTyp Spanned x) => Spanned (Typ x) where
-  getSpan (VarTyp ex _)   = getSpan ex
-  getSpan (FunTyp ex _ _) = getSpan ex
-  getSpan (TupTyp ex _ _) = getSpan ex
-  getSpan (ParTyp ex _)   = getSpan ex
-  getSpan (NewTyp ex)     = getSpan ex
+  getSpan (VarTyp ex _)      = getSpan ex
+  getSpan (FunTyp ex _ _)    = getSpan ex
+  getSpan (TupTyp ex _ _)    = getSpan ex
+  getSpan (ParTyp ex _)      = getSpan ex
+  getSpan (NewTyp ex)        = getSpan ex
 
   setSpan (VarTyp ex x)   sp = VarTyp (setSpan ex sp) x
   setSpan (FunTyp ex a b) sp = FunTyp (setSpan ex sp) a b
@@ -267,30 +271,38 @@ instance (ForallXTyp Spanned x) => Spanned (Typ x) where
   setSpan (NewTyp ex)     sp = NewTyp (setSpan ex sp)
 
 instance (ForallXPat Spanned x) => Spanned (Pat x) where
-  getSpan (VarPat ex _)   = getSpan ex
-  getSpan (TupPat ex _ _) = getSpan ex
-  getSpan (NewPat ex)     = getSpan ex
+  getSpan (VarPat ex _)      = getSpan ex
+  getSpan (TupPat ex _ _)    = getSpan ex
+  getSpan (NewPat ex)        = getSpan ex
 
   setSpan (VarPat ex x)   sp = VarPat (setSpan ex sp) x
   setSpan (TupPat ex x y) sp = TupPat (setSpan ex sp) x y
   setSpan (NewPat ex)     sp = NewPat (setSpan ex sp)
 
 instance (ForallXDec Spanned x) => Spanned (Dec x) where
-  getSpan (Dec    ex _ _) = getSpan ex
-  getSpan (NewDec ex)     = getSpan ex
+  getSpan (Dec    ex _ _)    = getSpan ex
+  getSpan (NewDec ex)        = getSpan ex
 
   setSpan (Dec    ex p m) sp = Dec    (setSpan ex sp) p m
   setSpan (NewDec ex)     sp = NewDec (setSpan ex sp)
 
 
 instance Spanned (Located a) where
-  getSpan (L a _) = a
+  getSpan (L a _)    = a
   setSpan (L _ x) sp = L sp x
 
 instance Spanned SrcSpan where
-  getSpan = id
+  getSpan   = id
   setSpan _ = id
 
 instance Spanned Void where
   getSpan   = error "Impossible!"
   setSpan _ = error "Impossible!"
+
+getSpan' :: Spanned a => a -> ( SrcSpan , a )
+getSpan' a = ( getSpan a , a )
+
+pattern L' :: Spanned a => SrcSpan -> a -> a
+pattern L' x y  <- (getSpan' -> ( x , y ))
+  where
+    L' x y = setSpan y x
