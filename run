@@ -1,0 +1,4 @@
+./clean
+alex Lexer.x
+happy -agc --strict Parser.y -idetailed-info
+ghci TestParser.hs -fobject-code -Wunused-imports
